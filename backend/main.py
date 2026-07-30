@@ -52,13 +52,16 @@ def health_check():
 def chat_endpoint(req: ChatRequest):
     if not req.question or not req.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
-    
-    result = rag_engine.generate_answer(
-        question=req.question.strip(),
-        groq_api_key=req.api_key,
-        conversation_history=req.history
-    )
-    return result
+    try:
+        result = rag_engine.generate_answer(
+            question=req.question.strip(),
+            groq_api_key=req.api_key,
+            conversation_history=req.history
+        )
+        return result
+    except Exception as e:
+        print(f"[Chat Error] Exception during generation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/documents")
 def get_documents():

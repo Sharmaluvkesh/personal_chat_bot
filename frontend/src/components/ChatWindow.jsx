@@ -80,7 +80,12 @@ export default function ChatWindow({ apiKey, onAsk }) {
       });
 
       if (!res.ok) {
-        throw new Error(`Server status ${res.status}`);
+        let serverError = `Server error ${res.status}`;
+        try {
+          const errData = await res.json();
+          if (errData && errData.detail) serverError = errData.detail;
+        } catch (_) {}
+        throw new Error(serverError);
       }
 
       const data = await res.json();
@@ -97,7 +102,7 @@ export default function ChatWindow({ apiKey, onAsk }) {
       const errorMsg = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "⚠️ **Unable to connect to the backend server.** Please make sure the Python FastAPI backend is running on `http://localhost:8000`.",
+        content: `⚠️ **Unable to get response from server:** ${err.message || 'Connection failed'}.\n\n*Tip:* If you are deploying on Render/cloud, please ensure the ` + "`GROQ_API_KEY`" + ` environment variable is added under Environment Settings or enter your API key in the Knowledge Store (⚙️ icon).`,
         citations: []
       };
       setMessages(prev => [...prev, errorMsg]);
