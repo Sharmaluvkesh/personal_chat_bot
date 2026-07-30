@@ -215,8 +215,14 @@ class PersonalRAGEngine:
         if not self.chunks:
             return []
 
-        model = self.get_embedding_model()
         scored_results = []
+
+        # 1. Try Dense Embedding Search if model is available & system RAM permits
+        model = None
+        try:
+            model = self.get_embedding_model()
+        except Exception:
+            model = None
 
         if model and ST_AVAILABLE:
             try:
@@ -239,21 +245,81 @@ class PersonalRAGEngine:
                         "score": float(sims[idx])
                     })
             except Exception as e:
-                print(f"[RAG Engine] Dense search error: {e}")
+                print(f"[RAG Engine] Dense search fallback: {e}")
+                scored_results = []
 
+        # 2. Fast TF-IDF + Keyword Cosine Similarity Search (Lightweight 0MB PyTorch Memory)
         if not scored_results:
-            # Fallback to BM25/Keyword Overlap search
-            query_terms = set(re.findall(r'\w+', query.lower()))
-            for chunk in self.chunks:
-                content_lower = chunk.content.lower()
-                score = sum(1 for term in query_terms if term in content_lower)
-                scored_results.append({
-                    "content": chunk.content,
-                    "source": chunk.source_name,
-                    "page": chunk.page_number,
-                    "file_type": chunk.file_type,
-                    "score": float(score)
-                })
+            scored_results = self.compute_tfidf_similarity(query, self.chunks)
+
+        # Ensure Document Diversity (include top chunk from each unique source)
+        scored_results.sort(key=lambda x: x["score"], reverse=True)
+        final_results = []
+        seen_sources = set()
+
+        for item in scored_results:
+            if item["source"] not in seen_sources:
+                seen_sources.add(item["source"])
+                final_results.append(item)
+            if len(final_results) >= k:
+                break
+
+        for item in scored_results:
+            if item not in final_results:
+                final_results.append(item)
+            if len(final_results) >= k:
+                break
+
+        return final_results
+
+    def compute_tfidf_similarity(self, query: str, chunks: List[DocumentChunk]) -> List[Dict[str, Any]]:
+        """Zero-memory TF-IDF Cosine Similarity Search for Render free tier."""
+        def tokenize(text: str) -> List[str]:
+            return re.findall(r'\w+', text.lower())
+
+        query_tokens = tokenize(query)
+        if not query_tokens or not chunks:
+            return []
+
+        from collections import Counter
+        doc_count = len(chunks)
+        df = Counter()
+        for c in chunks:
+            for t in set(tokenize(c.content)):
+                df[t] += 1
+
+        q_tf = Counter(query_tokens)
+        q_vec = {t: cnt * (math.log((doc_count + 1) / (df[t] + 1)) + 1) for t, cnt in q_tf.items()}
+        q_norm = math.sqrt(sum(v ** 2 for v in q_vec.values())) or 1.0
+
+        results = []
+        for c in chunks:
+            c_tf = Counter(tokenize(c.content))
+            score = 0.0
+            c_norm_sq = 0.0
+            for term, count in c_tf.items():
+                idf = math.log((doc_count + 1) / (df[term] + 1)) + 1
+                w = count * idf
+                c_norm_sq += w ** 2
+                if term in q_vec:
+                    score += q_vec[term] * w
+
+            c_norm = math.sqrt(c_norm_sq) or 1.0
+            cosine_sim = (score / (q_norm * c_norm)) if (q_norm and c_norm) else 0.0
+
+            # Bonus for exact phrase overlap
+            if query.lower() in c.content.lower():
+                cosine_sim += 0.5
+
+            results.append({
+                "content": c.content,
+                "source": c.source_name,
+                "page": c.page_number,
+                "file_type": c.file_type,
+                "score": float(cosine_sim)
+            })
+
+        return results
 
         # Ensure Document Diversity (include top chunk from each unique source)
         scored_results.sort(key=lambda x: x["score"], reverse=True)
@@ -344,7 +410,7 @@ class PersonalRAGEngine:
         }
 
         try:
-            resp = requests.post(url, headers=headers, json=payload, timeout=12)
+            resp = requests.post(url, headers=headers, json=payload, timeout=25)
             if resp.status_code == 200:
                 data = resp.json()
                 return data["choices"][0]["message"]["content"]
