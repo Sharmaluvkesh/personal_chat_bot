@@ -1,0 +1,5 @@
+# Updated Resume - Luvkesh Sharma (2026 Edition)
+
+- **Latest Certification**: Certified Generative AI Architect & RAG Specialist (2026)
+- **Key Achievement**: 1st Place Winner at Global AI Hackathon 2026 for Multi-Agent RAG Orchestration.
+- **New Projects**: Personal RAG Bot v2.0 with PDF sliding window parsing and multi-document memory retention.

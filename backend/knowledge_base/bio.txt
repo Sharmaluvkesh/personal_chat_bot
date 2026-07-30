@@ -1,0 +1,20 @@
+Name: Luvkesh Sharma
+Role: AI & Software Engineer / Full Stack Developer
+Location: India
+Email: lksharma18102005@gmail.com
+GitHub: https://github.com/sharmaluvkesh
+LinkedIn: https://www.linkedin.com/in/luvkesh-sharma
+
+About Me:
+I am a passionate Software Engineer and AI enthusiast specializing in building Retrieval-Augmented Generation (RAG) systems, Full-Stack Web Applications, Machine Learning models, and intelligent AI Agents. I enjoy solving complex algorithmic challenges, working with modern web frameworks (React, Vite, Python FastAPI, Node.js), and leveraging cutting-edge LLMs (Groq, Gemini, Llama, OpenAI) to create seamless user experiences.
+
+Core Skills & Expertise:
+- Programming Languages: Python, C++, JavaScript/TypeScript, SQL, C, Java
+- AI & Data Science: Machine Learning, Deep Learning, LangChain, SentenceTransformers, ChromaDB, FAISS, PyTorch, Scikit-Learn, Prompt Engineering
+- Backend Development: FastAPI, Node.js, Express, REST APIs, Microservices, SQLite, PostgreSQL, MongoDB
+- Frontend Development: React.js, Vite, HTML5, CSS3, Modern UI/UX, Glassmorphic Design, Tailwind CSS
+- Developer Tools: Git, GitHub, Docker, VS Code, Linux, Postman
+
+Education & Learning:
+- Computer Science & Engineering Focus
+- Continuous learner exploring Generative AI, RAG optimization, Vector Databases, and Multi-Agent Orchestration.
